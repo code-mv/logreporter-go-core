@@ -10,3 +10,10 @@ func ItemInSlice(a interface{}, list []interface{}) bool {
 	}
 	return false
 }
+
+// AddAll adds all map entries from a source map to a target map
+func AddAll(source map[string]string, target map[string]string) {
+	for k, v := range source {
+		target[k] = v
+	}
+}

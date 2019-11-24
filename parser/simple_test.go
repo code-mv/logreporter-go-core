@@ -55,12 +55,28 @@ func TestParseExampleLogFile(t *testing.T) {
 		t.Errorf("Expected timestamp = %s but was %s", expectedTimestamp, result[schema.Timestamp])
 	}
 
-	// Define expected httpDetails
-	expectedHTTPDetails := "GET / HTTP/1.1"
+	// Define expected httpMethod
+	expectedHTTPMethod := "GET"
 
 	// Fail if httpDetails not correct
-	if result[schema.HTTPDetails] != expectedHTTPDetails {
-		t.Errorf("Expected httpDetails = %s but was %s", expectedHTTPDetails, result[schema.HTTPDetails])
+	if result[schema.HTTPMethod] != expectedHTTPMethod {
+		t.Errorf("Expected httpDetails = %s but was %s", expectedHTTPMethod, result[schema.HTTPMethod])
+	}
+
+	// Define expected url path
+	expectedURLPath := "/"
+
+	// Fail if httpDetails not correct
+	if result[schema.URLPath] != expectedURLPath {
+		t.Errorf("Expected httpDetails = %s but was %s", expectedURLPath, result[schema.URLPath])
+	}
+
+	// Define expected http version
+	expectedHTTPVersion := "HTTP/1.1"
+
+	// Fail if httpDetails not correct
+	if result[schema.HTTPVersion] != expectedHTTPVersion {
+		t.Errorf("Expected httpDetails = %s but was %s", expectedHTTPVersion, result[schema.HTTPVersion])
 	}
 
 	// Define expected unknownField2

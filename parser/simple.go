@@ -21,7 +21,7 @@ type SimpleLogEntryParser struct {
 }
 
 // Parse parses a raw log entry based on the provided config
-func (p *SimpleLogEntryParser) Parse(rawLogEntry *string) map[string]interface{} {
+func (p *SimpleLogEntryParser) Parse(rawLogEntry *string) map[string]string {
 
 	// Check entry conditions
 	errors.CheckMandatoryFields(rawLogEntry)
@@ -36,43 +36,17 @@ func (p *SimpleLogEntryParser) Parse(rawLogEntry *string) map[string]interface{}
 	allFields := matcher.FindAllString(*rawLogEntry, -1)
 
 	// Field values mapped to field names
-	fieldMap := mapNamedFields(allFields, p.schema.GetFieldDefinitions())
+	fieldMap := p.schema.MapFields(allFields)
 
+	// Return field map
 	return fieldMap
-
-}
-
-// mapNamedFields maps the important, named fields into
-// a map of field names and values
-func mapNamedFields(allFields []string, fieldDefs []schema.FieldDefinition) map[string]interface{} {
-
-	// Check entry conditions
-	errors.CheckMandatoryFields(allFields)
-
-	// Allocate map for result
-	result := make(map[string]interface{})
-
-	// Iterate across all fields
-	for i, value := range allFields {
-
-		if i < len(fieldDefs) {
-			// Get corresponding field def
-			fieldDef := fieldDefs[i]
-
-			// Parse field and add value to map
-			result[fieldDef.Name] = fieldDef.FieldParser(value)
-		}
-
-	}
-
-	// Return map result
-	return result
 
 }
 
 // NewLogEntryParser returns a simple implementation
 // of the LogEntryParse interface
 func NewLogEntryParser(schema schema.LogSchema) LogEntryParser {
+	// Return log entry parser
 	return &SimpleLogEntryParser{
 		config: &SimpleLogEntryParserConfig{
 			fieldMatcher: `[^\s"'\[\]]+|"([^"]*)"|'([^']*)'|\[([^"]*)\]`,

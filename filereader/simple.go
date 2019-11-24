@@ -10,6 +10,8 @@ import (
 type simpleFileReader struct {
 }
 
+// Read entries reads out log entries one by one and
+// sends then into the entries channel
 func (s *simpleFileReader) ReadEntries(filePath string, entriesChannel chan string) {
 
 	// Check preconditions
@@ -33,10 +35,12 @@ func (s *simpleFileReader) ReadEntries(filePath string, entriesChannel chan stri
 	// Configure custom split function
 	scanner.Split(split)
 
+	// Defer the closing of the entries channel
 	defer close(entriesChannel)
 
 	// Scan file based on custom split function
 	for scanner.Scan() {
+		// Send log entry into the entries channel
 		entriesChannel <- scanner.Text()
 
 		// Handle scanner errors
