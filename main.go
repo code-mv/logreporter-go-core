@@ -69,6 +69,8 @@ func printAllResults(analyticsContainer analytics.Container) {
 	fmt.Println()
 	// Display the top 3 most common IP addresses
 	displayTopNStat(schema.IPAddress, 3, analyticsContainer)
+	// Print blank line
+	fmt.Println()
 
 }
 
