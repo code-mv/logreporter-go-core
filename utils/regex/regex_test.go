@@ -3,7 +3,7 @@ package regex
 import (
 	"testing"
 
-	"github.com/code-mv/logreporter-go-core/errors"
+	"github.com/code-mv/logreporter-go-core/utils/errors"
 )
 
 func TestGetAllNamedCapturesPositive(t *testing.T) {

@@ -3,85 +3,25 @@ package parser
 import (
 	"regexp"
 
-	"github.com/code-mv/logreporter-go-core/fields"
-
-	"github.com/code-mv/logreporter-go-core/errors"
-	"github.com/code-mv/logreporter-go-core/regex"
+	"github.com/code-mv/logreporter-go-core/schema"
+	"github.com/code-mv/logreporter-go-core/utils/errors"
 )
 
-// fieldParser is a function that sanitises a particular field
-type fieldParser func(string) string
-
-// fieldConfig is a grouping of fieldName and corresponding sanitiser
-type fieldConfig struct {
-	name        string
-	fieldParser fieldParser
-}
-
-// fieldNames is a slice containing an ordered set of field names
-var fieldNames = []fieldConfig{
-	fieldConfig{
-		name:        fields.IPAddress,
-		fieldParser: func(s string) string { return s },
-	},
-	fieldConfig{
-		name:        fields.UnknownField1,
-		fieldParser: func(s string) string { return s },
-	},
-	fieldConfig{
-		name:        fields.Username,
-		fieldParser: func(s string) string { return s },
-	},
-	fieldConfig{
-		name: fields.Timestamp,
-		fieldParser: func(s string) string {
-			return regex.MustGetCaptureWithName(`\[(?P<timestamp>[^\[\]]+)\]`, s, "timestamp")
-		},
-	},
-	fieldConfig{
-		name: fields.HTTPDetails,
-		fieldParser: func(s string) string {
-
-			return regex.MustGetCaptureWithName(`\"(?P<httpDetails>[^\"]+)\"`, s, "httpDetails")
-
-		},
-	},
-	fieldConfig{
-		name:        fields.HTTPStatusCode,
-		fieldParser: func(s string) string { return s },
-	},
-	fieldConfig{
-		name:        fields.UnknownNumber,
-		fieldParser: func(s string) string { return s },
-	},
-	fieldConfig{
-		name: fields.UnknownField2,
-		fieldParser: func(s string) string {
-			return regex.MustGetCaptureWithName(`\"(?P<unknownField2>[^\"]+)\"`, s, "unknownField2")
-		},
-	},
-	fieldConfig{
-		name: fields.UserAgentDetails,
-		fieldParser: func(s string) string {
-			return regex.MustGetCaptureWithName(`\"(?P<userAgentDetails>[^\"]+)\"`, s, "userAgentDetails")
-		},
-	},
-}
-
-// SimpleFieldParserConfig defines some configurability
+// SimpleLogEntryParserConfig defines some configurability
 // that determines how the field parser identifies fields
-type SimpleFieldParserConfig struct {
+type SimpleLogEntryParserConfig struct {
 	fieldMatcher string
 }
 
-// SimpleFieldParser is an implementation of FieldParser
+// SimpleLogEntryParser is an implementation of FieldParser
 // that can parse the example logs in the DigIO programming task
-type SimpleFieldParser struct {
-	config *SimpleFieldParserConfig
+type SimpleLogEntryParser struct {
+	schema schema.LogSchema
+	config *SimpleLogEntryParserConfig
 }
 
 // Parse parses a raw log entry based on the provided config
-func (p *SimpleFieldParser) Parse(rawLogEntry *string) map[string]interface{} {
+func (p *SimpleLogEntryParser) Parse(rawLogEntry *string) map[string]interface{} {
 
 	// Check entry conditions
 	errors.CheckMandatoryFields(rawLogEntry)
@@ -96,7 +36,7 @@ func (p *SimpleFieldParser) Parse(rawLogEntry *string) map[string]interface{} {
 	allFields := matcher.FindAllString(*rawLogEntry, -1)
 
 	// Field values mapped to field names
-	fieldMap := mapNamedFields(allFields)
+	fieldMap := mapNamedFields(allFields, p.schema.GetFieldDefinitions())
 
 	return fieldMap
 
@@ -104,7 +44,7 @@ func (p *SimpleFieldParser) Parse(rawLogEntry *string) map[string]interface{} {
 
 // mapNamedFields maps the important, named fields into
 // a map of field names and values
-func mapNamedFields(allFields []string) map[string]interface{} {
+func mapNamedFields(allFields []string, fieldDefs []schema.FieldDefinition) map[string]interface{} {
 
 	// Check entry conditions
 	errors.CheckMandatoryFields(allFields)
@@ -115,12 +55,12 @@ func mapNamedFields(allFields []string) map[string]interface{} {
 	// Iterate across all fields
 	for i, value := range allFields {
 
-		if i < len(fieldNames) {
-			// Get corresponding field config
-			fieldConf := fieldNames[i]
+		if i < len(fieldDefs) {
+			// Get corresponding field def
+			fieldDef := fieldDefs[i]
 
 			// Parse field and add value to map
-			result[fieldConf.name] = fieldConf.fieldParser(value)
+			result[fieldDef.Name] = fieldDef.FieldParser(value)
 		}
 
 	}
@@ -130,12 +70,13 @@ func mapNamedFields(allFields []string) map[string]interface{} {
 
 }
 
-// NewParser returns a simple implementation
+// NewLogEntryParser returns a simple implementation
 // of the LogEntryParse interface
-func NewParser() LogEntryParser {
-	return &SimpleFieldParser{
-		config: &SimpleFieldParserConfig{
+func NewLogEntryParser(schema schema.LogSchema) LogEntryParser {
+	return &SimpleLogEntryParser{
+		config: &SimpleLogEntryParserConfig{
 			fieldMatcher: `[^\s"'\[\]]+|"([^"]*)"|'([^']*)'|\[([^"]*)\]`,
 		},
+		schema: schema,
 	}
 }

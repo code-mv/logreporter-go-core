@@ -3,7 +3,7 @@ package regex
 import (
 	"regexp"
 
-	"github.com/code-mv/logreporter-go-core/errors"
+	"github.com/code-mv/logreporter-go-core/utils/errors"
 )
 
 // GetCaptureWithName returns the match with the expected name or an error

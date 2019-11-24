@@ -27,6 +27,8 @@ const (
 	RegexCaptureNotFoundError ErrorCode = "005"
 	// JSONMarshalError errorcode
 	JSONMarshalError ErrorCode = "006"
+	// FileReadError errorcode
+	FileReadError ErrorCode = "007"
 )
 
 // RecoveryFunc is a callback function that gets invoked
@@ -35,18 +37,30 @@ type RecoveryFunc func(interface{})
 
 // New creates a new error quoting the provided error code
 func New(errCode ErrorCode, msg string) error {
+
+	// Check preconditions
+	CheckMandatoryFields(errCode, msg)
+
 	// Return error with standard message format
 	return fmt.Errorf(errFormat, errCode, msg)
 }
 
 // Newf creates a new error quoting the provided error code
 func Newf(errCode ErrorCode, msg string, args ...interface{}) error {
+
+	// Check preconditions
+	CheckMandatoryFields(errCode, msg, args)
+
 	// Return error with standard message format
 	return fmt.Errorf(errFormat, errCode, fmt.Sprintf(msg, args...))
 }
 
 // WrapOnError wraps and rethrows if the given error is not nil
 func WrapOnError(err error, errCode ErrorCode, msg string) error {
+
+	// Check preconditions
+	CheckMandatoryFields(errCode, msg)
+
 	// Return nil if error is nil
 	if err == nil {
 		return nil
@@ -59,6 +73,10 @@ func WrapOnError(err error, errCode ErrorCode, msg string) error {
 
 // ThrowOnError logs and panics if the given error is not nil
 func ThrowOnError(err error, errCode ErrorCode, msg string) {
+
+	// Check preconditions
+	CheckMandatoryFields(errCode, msg)
+
 	if err != nil {
 		// Log message
 		log.Printf(errFormat, errCode, msg)
@@ -69,6 +87,10 @@ func ThrowOnError(err error, errCode ErrorCode, msg string) {
 
 // ThrowOnErrorf logs and panics if the given error is not nil
 func ThrowOnErrorf(err error, errCode ErrorCode, msg string, args ...interface{}) {
+
+	// Check preconditions
+	CheckMandatoryFields(errCode, msg, args)
+
 	if err != nil {
 		// Log message
 		log.Printf(errFormat, errCode, fmt.Sprintf(msg, args...))
@@ -79,6 +101,9 @@ func ThrowOnErrorf(err error, errCode ErrorCode, msg string, args ...interface{}
 
 // Catch recovers for a particular error code
 func Catch(recovery RecoveryFunc, expectedErrCode ...ErrorCode) {
+
+	// Check preconditions
+	CheckMandatoryFields(recovery, expectedErrCode)
 
 	// Attempt recovery
 	if r := recover(); r != nil {
@@ -100,6 +125,10 @@ func Catch(recovery RecoveryFunc, expectedErrCode ...ErrorCode) {
 // mandatory fields are null
 func CheckMandatoryFields(fields ...interface{}) {
 
+	if fields == nil {
+		ThrowOnError(errors.New(""), RuntimeError, "Missing one or more mandatory fields")
+	}
+
 	// Iterate values of mandatory fields
 	for _, value := range fields {
 
@@ -113,6 +142,9 @@ func CheckMandatoryFields(fields ...interface{}) {
 // errorCodesToInterfaces converts an array of strings to
 // an array of interfaces
 func errorCodesToInterfaces(errCodes []ErrorCode) []interface{} {
+
+	// Check preconditions
+	CheckMandatoryFields(errCodes)
 
 	// Create a slice of interfaces
 	new := make([]interface{}, len(errCodes))
