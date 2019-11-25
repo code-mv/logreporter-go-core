@@ -43,10 +43,20 @@ func displayTopNStat(fieldName string, n int, analyticsContainer analytics.Conta
 	// Write the headline
 	sb.WriteString(fmt.Sprintf("Top %d stats for %s ...\n", n, fieldName))
 
-	// Iterate over the stats
-	for i, v := range topNStat {
-		// Write each top stat
-		sb.WriteString(fmt.Sprintf("%d. %s (%d)\n", i+1, v.GetValue(), v.GetCount()))
+	// Define an integer referring to the current place
+	currentPlace := 1
+
+	// Iterate over the map of stats
+	for _, v := range topNStat {
+
+		// Iterate over the stats at place N
+		for _, stat := range v.GetStats() {
+			// Write each top stat
+			sb.WriteString(fmt.Sprintf("%d. %s (%d)\n", currentPlace, stat.GetValue(), stat.GetCount()))
+		}
+
+		currentPlace += len(v.GetStats())
+
 	}
 
 	// Print results to stdout

@@ -1,6 +1,8 @@
 package analytics
 
-import "sort"
+import (
+	"sort"
+)
 
 // valueMapContainer stores counts mapped to the
 // values they are a count of
@@ -86,7 +88,7 @@ func (s *simpleAnalyticsContainer) CountUniqueValuesForField(fieldName string) i
 }
 
 // GetTopNResults returns the top n results for the given fieldName
-func (s *simpleAnalyticsContainer) GetTopNResults(fieldName string, n int) ([]Stat, bool) {
+func (s *simpleAnalyticsContainer) GetTopNResults(fieldName string, n int) (SameCountGroupList, bool) {
 
 	// Get a value map by fieldName
 	vmc, ok := s.fieldMap[fieldName]
@@ -100,20 +102,50 @@ func (s *simpleAnalyticsContainer) GetTopNResults(fieldName string, n int) ([]St
 	// Convert the value map to a sortable stat list
 	statList := valueMapToStatList(vmc.valueMap)
 
-	// Create a new string slice
-	results := make([]Stat, 0)
+	// Create a slice of sameCount group to group same scores
+	results := make(SameCountGroupList, 0)
 
 	// Iterate over the stat list
 	for i, v := range statList {
 		// Iterate while index is less than n
 		if i < n {
-			// Append fields in this range to results
-			results = append(results, v)
+
+			// Create new same count group
+			scg := &simpleSameCountGroup{
+				Stats: make([]Stat, 0),
+			}
+
+			// Add current stat to scg
+			scg.AddStat(v)
+
+			// Add all status with same count to placeNMap
+			addAllStatsWithSameCount(statList, v.GetCount(), i+1, scg)
+
+			// Append scg to results at place 'i'
+			results = append(results, scg)
+
 		}
 	}
 
 	// Return results
 	return results, true
+
+}
+
+// addAllStatsWithSameCount looks for other stats with same count
+// and adds any found to target i
+// Note: assumes that statList is sorted in descending order
+func addAllStatsWithSameCount(statList statList, searchCount int, nextEligible int, target SameCountGroup) {
+
+	for i := nextEligible; i < len(statList); i++ {
+
+		if statList[i].GetCount() == searchCount {
+			target.AddStat(statList[i])
+		} else {
+			break
+		}
+
+	}
 
 }
 
@@ -164,6 +196,21 @@ func (p statList) Less(i, j int) bool { return p[i].count < p[j].count }
 
 // Swap swaps two items in the statList
 func (p statList) Swap(i, j int) { p[i], p[j] = p[j], p[i] }
+
+// simpleSameCountGroup is a grouping of stats with the same score
+type simpleSameCountGroup struct {
+	Stats []Stat
+}
+
+// GetStats returns the same count stats
+func (s *simpleSameCountGroup) GetStats() []Stat {
+	return s.Stats
+}
+
+// AddStat adds a new stat to the group
+func (s *simpleSameCountGroup) AddStat(stat Stat) {
+	s.Stats = append(s.Stats, stat)
+}
 
 // NewContainer returns a new analytics container
 func NewContainer() Container {
