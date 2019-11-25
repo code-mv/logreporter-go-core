@@ -105,10 +105,25 @@ func (s *simpleAnalyticsContainer) GetTopNResults(fieldName string, n int) (Same
 	// Create a slice of sameCount group to group same scores
 	results := make(SameCountGroupList, 0)
 
+	// Whether awarding first, second or third place etc.
+	nextPlaceToAward := 1
+
+	// Prev count required to avoid duplicating results
+	prevCount := -1
+
 	// Iterate over the stat list
 	for i, v := range statList {
 		// Iterate while index is less than n
-		if i < n {
+		if nextPlaceToAward < (n + 1) {
+
+			// Get this count
+			thisCount := v.GetCount()
+
+			// Continue if the previous count is the same as this one
+			// this avoids doubling up
+			if prevCount != -1 && prevCount == thisCount {
+				continue
+			}
 
 			// Create new same count group
 			scg := &simpleSameCountGroup{
@@ -119,10 +134,16 @@ func (s *simpleAnalyticsContainer) GetTopNResults(fieldName string, n int) (Same
 			scg.AddStat(v)
 
 			// Add all status with same count to placeNMap
-			addAllStatsWithSameCount(statList, v.GetCount(), i+1, scg)
+			addAllStatsWithSameCount(statList, thisCount, i+1, scg)
 
 			// Append scg to results at place 'i'
 			results = append(results, scg)
+
+			// Set prev count
+			prevCount = thisCount
+
+			// Increment next place to award
+			nextPlaceToAward++
 
 		}
 	}
