@@ -143,7 +143,7 @@ func (s *simpleAnalyticsContainer) GetTopNResults(fieldName string, n int) (Same
 			prevCount = thisCount
 
 			// Increment next place to award
-			nextPlaceToAward++
+			nextPlaceToAward += len(scg.GetStats())
 
 		}
 	}
